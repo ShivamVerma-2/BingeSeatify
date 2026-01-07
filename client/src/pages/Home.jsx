@@ -1,8 +1,18 @@
 import React from 'react'
+import HeroSection from '../components/HeroSection'
+import FeatureSection from '../components/FeatureSection'
+import BlurCircle from '../components/BlurCircle'
+import TrailersSection from '../components/TrailersSection'
 
 const Home = () => {
   return (
-    <div></div>
+    <> <HeroSection />
+     <FeatureSection/>
+     <BlurCircle/>
+     <TrailersSection/>
+    </>
+    
+
   )
 }
 
