@@ -1,82 +1,97 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { dummyTrailers } from '../assets/assets'
-import ReactPlayer from 'react-player' // Specific import for YouTube
 import BlurCircle from './BlurCircle'
 import { PlayCircleIcon } from 'lucide-react'
 
-const Trailers = () => {
-  // Initialize with the first trailer from assets
-  const [currentTrailer, setCurrentTrailer] = useState(dummyTrailers[0])
-  const [isLoaded, setIsLoaded] = useState(false)
+const TrailerPlayer = () => {
+  const [activeVideo, setActiveVideo] = useState(null);
 
-  // Ensure component is mounted to prevent hydration errors
+  // Helper to extract ID: 'https://www.youtube.com/watch?v=WpW36ldAqnM' -> 'WpW36ldAqnM'
+  const getYouTubeID = (url) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
   useEffect(() => {
-    setIsLoaded(true)
-  }, [])
+    if (dummyTrailers.length > 0) {
+      setActiveVideo(dummyTrailers[0]);
+    }
+  }, []);
 
-  if (!isLoaded) return null
+  if (!activeVideo) return <div className="h-96 bg-black" />;
+
+  const videoId = getYouTubeID(activeVideo.videoUrl);
 
   return (
-    <div className="px-6 md:px-16 lg:px-24 xl:px-44 py-20 overflow-hidden">
-      <p className="text-gray-300 font-medium text-lg max-w-[960px] mx-auto mb-6">
-        Trailers
-      </p>
+    <div className="px-6 md:px-16 lg:px-24 xl:px-44 py-20 bg-[#0a0a0a] min-h-screen text-white">
+      <div className="max-w-[1000px] mx-auto">
+        <h2 className="text-2xl font-semibold mb-8 border-l-4 border-red-600 pl-4">
+          Featured Trailers
+        </h2>
 
-      <div className="relative max-w-[960px] mx-auto">
-        <BlurCircle top="-100px" right="-100px" />
-        
-        {/* Responsive Player Wrapper */}
-        <div className="relative pt-[56.25%] rounded-xl overflow-hidden bg-black/50 border border-white/10">
-    <ReactPlayer
-  key={currentTrailer?.videoUrl} // Forces re-mount when trailer changes
-  url={currentTrailer?.videoUrl}
-  playing={true} 
-  muted={true}      // REQUIRED: Fixes the NotAllowedError
-  controls={true}   // Shows YouTube's own play/volume buttons
-  width="100%"
-  height="100%"
-  style={{ position: 'absolute', top: 0, left: 0 }}
-  config={{
-    youtube: {
-      playerVars: { 
-        autoplay: 1,
-        modestbranding: 1,
-        rel: 0 
-      }
-    }
-  }}
-  onReady={() => console.log("Video is ready to play")}
-  onError={(e) => console.error("YouTube Load Error:", e)}
-/>
-        </div>
-      </div>
-
-      <div className='grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mt-12 max-w-[960px] mx-auto'>
-        {dummyTrailers.map((trailer, index) => (
-          <div 
-            key={index} 
-            className={`relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-2 ${currentTrailer?.videoUrl === trailer.videoUrl ? 'ring-2 ring-primary opacity-100' : 'opacity-60 hover:opacity-100'}`}
-            onClick={() => {
-                setCurrentTrailer(trailer);
-                window.scrollTo({ top: 500, behavior: 'smooth' }); // Adjust scroll to player
-            }}
-          >
-            <img 
-              src={trailer.image} 
-              alt="trailer thumbnail" 
-              className='w-full h-24 md:h-32 object-cover'
-            />
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <PlayCircleIcon 
-                  strokeWidth={1.5} 
-                  className="w-8 h-8 md:w-10 md:h-10 text-white"
-                />
-            </div>
+        {/* MAIN VIDEO CONTAINER */}
+        <div className="relative group shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+          <BlurCircle top="-50px" left="-50px" />
+          
+          <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/5 bg-black">
+            <iframe
+              key={videoId} // Forces fresh load when ID changes
+              width="100%"
+              height="100%"
+              muted={false}
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=0&mute=0&rel=0&modestbranding=1`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="absolute top-0 left-0 w-full h-full"
+            ></iframe>
           </div>
-        ))}
+        </div>
+
+        {/* THUMBNAIL SELECTION STRATEGY */}
+        <div className="mt-10">
+          <p className="text-sm text-gray-400 uppercase tracking-widest mb-4">Up Next</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {dummyTrailers.map((trailer, index) => {
+              const isSelected = activeVideo.videoUrl === trailer.videoUrl;
+              return (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setActiveVideo(trailer);
+                    // window.scrollTo({ top:200 , behavior: 'smooth' });
+                  }}
+                  className={`group relative rounded-xl overflow-hidden transition-all duration-500 
+                    ${isSelected ? 'ring-2 ring-red-600 scale-95' : 'hover:scale-105 opacity-50 hover:opacity-100'}`}
+                >
+                  <img 
+                    src={trailer.image} 
+                    alt="Thumbnail" 
+                    className="w-full h-28 object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  
+                  {/* Overlay for inactive videos */}
+                  {!isSelected && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <PlayCircleIcon className="w-10 h-10 text-white/80" />
+                    </div>
+                  )}
+
+                  {/* Playing Indicator */}
+                  {isSelected && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-600 animate-pulse" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Trailers
+export default TrailerPlayer;
