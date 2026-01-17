@@ -13,6 +13,7 @@ const MovieCard = ({ movie }) => {
           navigate(`/movies/${movie._id}`); scrollTo(0, 0)
         }}
         src={movie.backdrop_path}
+        
         alt={movie.title}
         className="rounded-lg h-52 w-full object-cover cursor-pointer"
       />
@@ -42,6 +43,7 @@ const MovieCard = ({ movie }) => {
   </p>
 
 </div>
+
 
    
 
